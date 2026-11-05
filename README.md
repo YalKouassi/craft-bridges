@@ -37,8 +37,10 @@ to pick a mode, a few apps (`apps: mailcraft notecraft`), a tag, or `force`.
 
 1. Check [IGNORED.md](IGNORED.md), which lists apps left out and why.
 2. Check that upstream ships something the launcher can install: an `.msi` or `-portable.zip` on
-   Windows whose `<id>.exe` has a ProductVersion equal to the tag (or `former_ids` naming the exe),
-   and AppImage, `.deb`, `.rpm`, tarball or `.dmg` elsewhere. A `Setup.exe` can't be installed.
+   Windows, and AppImage, `.deb`, `.rpm`, tarball or `.dmg` elsewhere. A `Setup.exe` can't be
+   installed. A portable zip's exe should have a ProductVersion equal to the tag. One with no
+   version resource installs from launcher 0.12 on but is rolled back by older launchers, so prefer
+   upstream's `.msi` when it has one.
 3. Add `apps/<id>.toml` with `repo = "YalKouassi/craft-bridges"` and `shared = true`, then run the
    workflow in `compare` mode for that app (it dry-runs).
 4. Run it in `publish` mode, and add `{"repo": "YalKouassi/craft-bridges", "app": "<id>"}` to the
