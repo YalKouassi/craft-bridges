@@ -15,9 +15,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: publish or compare
+        description: publish, compare, or token-check (create and delete a draft release in each bridge repo)
         type: choice
-        options: [compare, publish]
+        options: [compare, publish, token-check]
         default: compare
       apps:
         description: App ids separated by spaces (empty = all of apps/)
@@ -104,8 +104,27 @@ jobs:
           echo "repo=$repo" >> "$GITHUB_OUTPUT"
           echo "before=$(gh release view --repo "$repo" --json tagName --jq .tagName 2>/dev/null || true)" >> "$GITHUB_OUTPUT"
 
+      # token-check: proves BRIDGES_TOKEN can write releases to the bridge repo by creating a
+      # draft release (never public) and deleting it again. Publishes nothing.
+      - name: Check the token can write releases
+        id: tokencheck
+        if: env.MODE == 'token-check'
+        env:
+          GH_TOKEN: ${{ secrets.BRIDGES_TOKEN }}
+          REPO: ${{ steps.cfg.outputs.repo }}
+          CRAFT_BRIDGE_ERRORS: ${{ runner.temp }}/bridge-errors.txt
+        run: |
+          if [ -z "$GH_TOKEN" ]; then echo "BRIDGES_TOKEN isn't set" | tee "$CRAFT_BRIDGE_ERRORS"; exit 1; fi
+          tag="token-check-$GITHUB_RUN_ID"
+          if ! out=$(gh api -X POST "repos/$REPO/releases" -f tag_name="$tag" -f name="$tag" -F draft=true --jq .id 2>&1); then
+            echo "BRIDGES_TOKEN can't create releases in $REPO: $out" | tee "$CRAFT_BRIDGE_ERRORS"; exit 1
+          fi
+          gh api -X DELETE "repos/$REPO/releases/$out"
+          echo "BRIDGES_TOKEN can write releases to $REPO"
+
       - name: Mirror
         id: mirror
+        if: env.MODE != 'token-check'
         env:
           APP: ${{ matrix.app }}
           TAG: ${{ inputs.tag }}
@@ -161,11 +180,14 @@ jobs:
           REPO: ${{ steps.cfg.outputs.repo }}
           BEFORE: ${{ steps.cfg.outputs.before }}
           MIRROR: ${{ steps.mirror.outcome }}
+          TOKENCHECK: ${{ steps.tokencheck.outcome }}
           SAME: ${{ steps.compare.outputs.same }}
           GH_TOKEN: ${{ github.token }}
         run: |
           after=$(gh release view --repo "$REPO" --json tagName --jq .tagName 2>/dev/null || true)
-          if [ "$MIRROR" != success ]; then result="failed"
+          if [ "$MODE" = token-check ]; then
+            if [ "$TOKENCHECK" = success ]; then result="token can write releases"; else result="token check FAILED"; fi
+          elif [ "$MIRROR" != success ]; then result="failed"
           elif [ "$MODE" = compare ] && [ "$SAME" = yes ]; then result="rebuilt $BEFORE: identical"
           elif [ "$MODE" = compare ] && [ "$SAME" = no ]; then result="rebuilt $BEFORE: DIFFERENT"
           elif [ "$MODE" = compare ]; then result="dry run of upstream's latest passed (no release yet)"
