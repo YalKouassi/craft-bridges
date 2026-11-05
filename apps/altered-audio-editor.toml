@@ -1,0 +1,42 @@
+# Unofficial bridge: mirrors geekcastradio/altered-audio-editor releases for Craft Unofficial Launcher.
+# Run by sync.yml with this repo's bridge.py (the README explains every key).
+
+[bridge]
+upstream = "geekcastradio/altered-audio-editor"
+repo = "YalKouassi/craft-bridges"
+shared = true
+upstream_sums = ["SHA256SUMS.txt"]
+# Not mirrored: the NSIS setup .exe and its updater signature (the launcher installs the portable
+# zip) and the Tauri updater's latest.json.
+skip = ['-setup\.exe$', '-setup\.exe\.sig$', '^latest\.json$']
+
+[descriptor]
+id = "altered-audio-editor"
+name = "Altered Audio Editor"
+tagline = "Multitrack audio editor for podcasters and voiceover"
+publisher = "geekcastradio"
+bundle_id = "com.thegcrn.alteredaudioeditor"   # identifier in upstream's tauri.conf.json
+website = "https://github.com/geekcastradio/altered-audio-editor"
+color = "#7a4fd1"
+
+[icon]
+url = "https://raw.githubusercontent.com/{upstream}/{tag}/src-tauri/icons/128x128@2x.png"
+
+# Upstream's zip holds `Altered Audio Editor.exe` (ProductVersion matches the tag). The launcher
+# needs `<id>.exe`, so the zip is repacked with the executable renamed; its bytes are unchanged.
+[[rename]]
+match = 'Altered-Audio-Editor-v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-portable\.zip'
+to = '{id}-{version}-windows-x64-portable.zip'
+exe = "Altered Audio Editor.exe"
+
+[[rename]]
+match = 'Altered-Audio-Editor-v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-linux-amd64\.deb'
+to = '{id}-{version}-linux-x86_64.deb'
+
+[[rename]]
+match = 'Altered-Audio-Editor-v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-x86_64\.AppImage'
+to = '{id}-{version}-linux-x86_64.AppImage'
+
+[[rename]]
+match = 'Altered-Audio-Editor-v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-macos-arm64\.dmg'
+to = '{id}-{version}-macos-aarch64.dmg'

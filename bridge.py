@@ -650,11 +650,12 @@ def check_tar_layout(path: Path, app_id: str) -> list[str]:
     return [f"{path.name}: no regular file at {where}bin/{app_id} or {where}{app_id}"]
 
 
-def repack_zip(src: Path, dst: Path, stem_list: list[str]) -> None:
+def repack_zip(src: Path, dst: Path, stem_list: list[str], exe: str | None = None) -> None:
     """Rewrites a portable zip so `<id>.exe` sits at the root: the folder holding the executable
     becomes the archive root, and every path uses `/`. Every file must live in that folder
-    (nothing is dropped). File bytes are copied unchanged."""
-    exe_names = {f"{s}.exe".lower() for s in stem_list}
+    (nothing is dropped). File bytes are copied unchanged. With `exe`, upstream's executable has
+    that file name instead, and it is renamed to `<id>.exe`."""
+    exe_names = {(exe or f"{s}.exe").lower() for s in stem_list}
     with zipfile.ZipFile(src) as z:
         # Some Windows tools write `\` as the separator, which the launcher refuses; when
         # rewriting, it is read as a folder separator and written back as `/`.
@@ -673,12 +674,20 @@ def repack_zip(src: Path, dst: Path, stem_list: list[str]) -> None:
             raise BridgeError(f"{src.name}: no {stem_list[0]}.exe anywhere in the zip")
         root = exes[0][:-1]
         n = len(root)
+        renamed = f"{stem_list[0]}.exe"
+        if exe and renamed.lower() != exe.lower():
+            clash = [p for p in parts.values() if p[:n] == root and len(p) == n + 1 and p[-1].lower() == renamed.lower()]
+            if clash:
+                raise BridgeError(f"{src.name}: {renamed} already exists beside {exe}")
         outside = [i.filename for i in infos if parts[i.filename][:n] != root]
         if outside:
             raise BridgeError(f"{src.name}: files outside {'/'.join(root)}/ would be lost by repacking: {outside[:5]}")
         with zipfile.ZipFile(dst, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as out:
             for i in infos:
-                info = zipfile.ZipInfo("/".join(parts[i.filename][n:]), date_time=i.date_time)
+                rel = list(parts[i.filename][n:])
+                if exe and len(rel) == 1 and rel[0].lower() == exe.lower():
+                    rel = [renamed]
+                info = zipfile.ZipInfo("/".join(rel), date_time=i.date_time)
                 info.external_attr = i.external_attr
                 info.compress_type = zipfile.ZIP_DEFLATED
                 with z.open(i) as r, out.open(info, "w", force_zip64=True) as w:
@@ -859,6 +868,7 @@ class Rule:
     to: str
     repack: str = "auto"  # auto | always | never
     map: dict = field(default_factory=dict)
+    exe: str | None = None  # portable zips: upstream's executable name, renamed to <id>.exe
 
 
 @dataclass
@@ -909,12 +919,14 @@ def load_config(path: Path) -> Config:
         raise ConfigError(f"unknown keys in [descriptor]: {sorted(unknown)} (repo, upstream, schema and icon are filled in)")
     rules = []
     for i, r in enumerate(raw.get("rename", [])):
-        if set(r) - {"match", "to", "repack", "map"} or "match" not in r or "to" not in r:
-            raise ConfigError(f"[[rename]] #{i + 1} needs `match` and `to` (and optionally `repack`, `map`)")
+        if set(r) - {"match", "to", "repack", "map", "exe"} or "match" not in r or "to" not in r:
+            raise ConfigError(f"[[rename]] #{i + 1} needs `match` and `to` (and optionally `repack`, `map`, `exe`)")
+        if "exe" in r and not (isinstance(r["exe"], str) and r["exe"].lower().endswith(".exe") and valid_file_name(r["exe"].replace(" ", "_"))):
+            raise ConfigError(f"[[rename]] #{i + 1}: exe must be a plain file name ending in .exe")
         if r.get("repack", "auto") not in ("auto", "always", "never"):
             raise ConfigError(f"[[rename]] #{i + 1}: repack must be auto, always or never")
         try:
-            rules.append(Rule(re.compile(r["match"]), r["to"], r.get("repack", "auto"), r.get("map", {})))
+            rules.append(Rule(re.compile(r["match"]), r["to"], r.get("repack", "auto"), r.get("map", {}), r.get("exe")))
         except re.error as e:
             raise ConfigError(f"[[rename]] #{i + 1}: bad regex: {e}") from e
     skip = b.get("skip", [])
@@ -1297,16 +1309,22 @@ def build_release(cfg: Config, release: dict, out_root: Path, token: str | None)
         layout_problems = []
         if pkg and pkg.suffix == "-portable.zip":
             layout_problems = check_zip_layout(raw, st)
+            if rule.exe and not layout_problems:
+                layout_problems = [f"{name}: exe = {rule.exe!r} is set but the zip already has {st[0]}.exe"]
+            elif rule.exe:
+                layout_problems.append(f"upstream's executable is {rule.exe!r}")
         elif pkg and pkg.suffix == ".tar.gz" and pkg.token.split("-")[0] in ("linux", "freebsd"):
             layout_problems = check_tar_layout(raw, app_id)
         must_repack = (rule.repack == "always") or (rule.repack == "auto" and layout_problems)
         if pkg and must_repack and pkg.suffix in ("-portable.zip", ".tar.gz"):
             log(f"  repack {name}: {'; '.join(layout_problems) or 'repack = always'}")
             if pkg.suffix == "-portable.zip":
-                repack_zip(raw, target, st)
+                repack_zip(raw, target, st, rule.exe)
             else:
                 repack_tar(raw, target, app_id, new[: -len(".tar.gz")])
             what += "; repacked (archive layout only; the files inside are unchanged)"
+            if rule.exe and pkg.suffix == "-portable.zip":
+                what += f"; {rule.exe} renamed to {st[0]}.exe"
             raw.unlink()
         else:
             if layout_problems:
@@ -1385,13 +1403,13 @@ def release_notes(cfg: Config, d: dict, release: dict, renamed, skipped, dist: P
         "",
         "The packages are upstream's own builds, downloaded from the release above and checked against its checksums. "
         "They are renamed to the launcher's naming contract; an archive is repacked only if its layout needed it (marked below), "
-        "and no program file is changed.",
+        "and no program file's contents are changed (a few have their executable renamed, marked below).",
         "",
         "| File | Upstream asset | SHA-256 |",
         "|---|---|---|",
     ]
     for old, new, what in renamed:
-        mark = " (repacked)" if "repacked" in what else ""
+        mark = (" (repacked, executable renamed)" if "renamed to" in what else " (repacked)") if "repacked" in what else ""
         lines.append(f"| `{new}`{mark} | `{old}` | `{sums.get(new, '')}` |")
     if skipped:
         lines += ["", "Not mirrored: " + ", ".join(f"`{n}`" for n, _ in skipped) + "."]

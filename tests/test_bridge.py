@@ -352,6 +352,22 @@ class Layouts(unittest.TestCase):
             self.assertEqual(sorted(i.orig_filename for i in z.infolist()), ["SubCraft.exe", "third/x.txt"])
             self.assertEqual(z.read("SubCraft.exe"), b"program")
 
+    def test_repack_zip_renames_exe(self):
+        src, dst = self.d / "in.zip", self.d / "out.zip"
+        make_zip(src, ["My App.exe", "LICENSE"])
+        self.assertNotEqual(b.check_zip_layout(src, ["my-app"]), [])
+        b.repack_zip(src, dst, ["my-app"], "My App.exe")
+        self.assertEqual(b.check_zip_layout(dst, ["my-app"]), [])
+        with zipfile.ZipFile(dst) as z:
+            self.assertEqual(sorted(z.namelist()), ["LICENSE", "my-app.exe"])
+            self.assertEqual(z.read("my-app.exe"), b"data:My App.exe")
+
+    def test_repack_zip_rename_refuses_clash(self):
+        src = self.d / "in.zip"
+        make_zip(src, ["My App.exe", "my-app.exe"])
+        with self.assertRaises(b.BridgeError):
+            b.repack_zip(src, self.d / "out.zip", ["my-app"], "My App.exe")
+
     def test_repack_zip_refuses_to_drop_files(self):
         src = self.d / "in.zip"
         make_zip(src, ["a/b/subcraft.exe", "a/readme.txt"])

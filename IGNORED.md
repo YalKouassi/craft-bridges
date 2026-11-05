@@ -9,7 +9,6 @@ reason and date when adding one here. An app that later fixes the reason can com
 | PixelCraft | [asad-albadi/PixelCraft](https://github.com/asad-albadi/PixelCraft) | Windows build is only a `Setup.exe`, which the launcher can't install | 2026-11-05 |
 | Align | [FedyaLight/align](https://github.com/FedyaLight/align) | Windows build is only a `Setup.exe` | 2026-11-05 |
 | Honeydew | [daijro/honeydew](https://github.com/daijro/honeydew) | Windows zip's exe has no version resource | 2026-11-05 |
-| Retake (Altered Audio Editor) | [geekcastradio/altered-audio-editor](https://github.com/geekcastradio/altered-audio-editor) | Windows exe name has spaces | 2026-11-05 |
 | FireCraft | [aliasfoxkde/FireCraft](https://github.com/aliasfoxkde/FireCraft) | No Windows build | 2026-10-30 |
 | OxiGuitar | [mateusrdp/oxiguitar](https://github.com/mateusrdp/oxiguitar) | Pre-releases only | 2026-10-30 |
 | MixStudio | [soulspin/MixStudio](https://github.com/soulspin/MixStudio) | Pre-releases only | 2026-11-05 |

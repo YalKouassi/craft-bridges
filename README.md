@@ -148,6 +148,7 @@ url = "https://raw.githubusercontent.com/{upstream}/{tag}/path/icon-256.png"
 match = 'RustGIS-(?P<version>[0-9][^-]*)-windows-x86_64-portable\.zip'
 to = '{id}-{version}-windows-x64-portable.zip'
 # repack = "auto"     # auto: only if the launcher couldn't install it; "always"; "never"
+# exe = "My App.exe"  # portable zips only: upstream's executable, renamed to <id>.exe when repacked
 
 [[rename]]
 match = 'rustgis_(?P<version>[^_]+)_(?P<arch>amd64|arm64)\.deb'
