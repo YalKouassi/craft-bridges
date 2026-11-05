@@ -1,4 +1,9 @@
-# Runs every bridge in apps/*.toml: one matrix job per app, every 3 hours and on demand.
+# Runs the bridges in apps/*.toml: one matrix job per app, every 15 minutes and on demand.
+#
+# A scheduled publish run first asks GitHub for each upstream's latest release (one API call per
+# app) and starts jobs only for apps whose release isn't here yet (or whose check failed), so a
+# quiet run is one short job and leaves the Sync status issue alone. Manual runs and compare mode
+# run every app (or the ones named); scheduled compare runs happen only once every 3 hours.
 #
 # This repo is the shared release repo: every app's releases are published here, tagged
 # <id>-v<version> (bridge.py's `shared = true`), and the launcher lists each app as
@@ -14,7 +19,7 @@ name: sync
 
 on:
   schedule:
-    - cron: '17 */3 * * *'
+    - cron: '2/15 * * * *'
   workflow_dispatch:
     inputs:
       mode:
@@ -51,6 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       apps: ${{ steps.list.outputs.apps }}
+      any: ${{ steps.list.outputs.any }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -59,6 +65,8 @@ jobs:
         env:
           WANTED: ${{ inputs.apps }}
           TAG: ${{ inputs.tag }}
+          SCHEDULED: ${{ github.event_name == 'schedule' }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           all=$(ls apps/*.toml | sed 's#^apps/##; s#\.toml$##')
           if [ -n "$WANTED" ]; then
@@ -70,10 +78,37 @@ jobs:
           if [ -n "$TAG" ] && [ "$(printf '%s\n' "$all" | wc -l)" -ne 1 ]; then
             echo "::error::a tag needs exactly one app"; exit 1
           fi
-          echo "apps=$(printf '%s\n' "$all" | jq -Rnc '[inputs | select(length > 0)]')" >> "$GITHUB_OUTPUT"
+          if [ "$SCHEDULED" = true ] && [ "$MODE" != publish ] && { [ $(( 10#$(date -u +%H) % 3 )) -ne 0 ] || [ "$(date -u +%M)" -ge 15 ]; }; then
+            # A scheduled compare run rebuilds every app, so it runs only once every 3 hours.
+            echo "compare mode: scheduled only once every 3 hours"; all=
+          elif [ "$SCHEDULED" = true ] && [ "$MODE" = publish ]; then
+            # Keep only apps whose upstream latest release isn't published here as <id>-v<version>.
+            # A failed lookup keeps the app, so a GitHub hiccup never hides a release.
+            if have=$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases?per_page=100" --jq '.[] | select(.draft | not) | .tag_name'); then
+              due=
+              for a in $all; do
+                up=$(python3 -I -c 'import sys, tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["bridge"]["upstream"])' "apps/$a.toml")
+                tag=$(gh api "repos/$up/releases/latest" --jq .tag_name 2>/dev/null) || tag=
+                if [ -z "$tag" ]; then
+                  echo "$a: couldn't read $up's latest release; checking it"; due="$due $a"
+                elif printf '%s\n' "$have" | grep -qxF -- "$a-v${tag#v}"; then
+                  echo "$a: $a-v${tag#v} already here"
+                else
+                  echo "$a: $up $tag is new"; due="$due $a"
+                fi
+              done
+              all=$(printf '%s\n' $due)
+            else
+              echo "::warning::couldn't list this repo's releases; running every app"
+            fi
+          fi
+          apps=$(printf '%s\n' "$all" | jq -Rnc '[inputs | select(length > 0)]')
+          echo "apps=$apps" >> "$GITHUB_OUTPUT"
+          if [ "$apps" = '[]' ]; then echo "any=false"; else echo "any=true"; fi >> "$GITHUB_OUTPUT"
 
   bridge:
     needs: list
+    if: needs.list.outputs.any == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     strategy:
@@ -182,8 +217,8 @@ jobs:
           retention-days: 7
 
   status:
-    needs: bridge
-    if: always()
+    needs: [list, bridge]
+    if: always() && needs.list.outputs.any == 'true'
     runs-on: ubuntu-latest
     steps:
       # Pushes latest.json (below), so it keeps the token.

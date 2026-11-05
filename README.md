@@ -14,7 +14,8 @@ search the [releases](https://github.com/YalKouassi/craft-bridges/releases) for 
 - `apps/<id>.toml`: one config per app (keys [below](#appsidtoml)).
 - `bridge.py`: the tool that mirrors a release (Python 3.11+, standard library only), with
   `tests/` and `tools/`.
-- `.github/workflows/sync.yml`: runs every config every 3 hours with this repo's own token, and
+- `.github/workflows/sync.yml`: checks every config every 15 minutes (only apps with a new
+  upstream release get a job) with this repo's own token, and
   keeps `latest.json` (each app's newest tag) up to date. The launcher reads that file when
   GitHub's API refuses it.
 - [JOINING.md](JOINING.md): how app authors make their own releases follow the contract, so they
