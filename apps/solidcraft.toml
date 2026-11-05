@@ -1,9 +1,9 @@
-# Unofficial bridge: mirrors bherbruck/solvecraft (SolidCraft) releases for Craft Unofficial Launcher.
+# Unofficial bridge: mirrors tangency-labs/solidcraft (formerly bherbruck/solvecraft) releases for Craft Unofficial Launcher.
 # Run by https://github.com/YalKouassi/craft-bridges with craft-bridge's bridge.py
 # (https://github.com/YalKouassi/craft-bridge; its README explains every key).
 
 [bridge]
-upstream = "bherbruck/solvecraft"
+upstream = "tangency-labs/solidcraft"
 repo = "YalKouassi/solidcraft-for-unofficial-launcher"
 # Every download is checked against upstream's own checksum file; a mismatch aborts the run.
 upstream_sums = ["SHA256SUMS.txt"]
