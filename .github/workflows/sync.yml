@@ -33,7 +33,7 @@ on:
         default: false
 
 permissions:
-  contents: read
+  contents: write   # publishing into this repo, the shared release repo (see "Mirror into the hub")
   issues: write   # this repo's "Sync status" issue
 
 concurrency:
@@ -151,6 +151,32 @@ jobs:
           if [ -n "$tag" ]; then args+=(--tag "$tag"); fi
           python -I .craft-bridge/bridge.py "${args[@]}"
 
+      # The move to one shared release repo: the app's release also goes into this repo, tagged
+      # <id>-v<version> (craft-bridge's `shared = true`), from the same config with `repo` pointed
+      # here. Runs while the launcher's index still lists the old repos.
+      - name: Mirror into the hub
+        id: hub
+        if: env.MODE == 'publish' && !cancelled()
+        env:
+          APP: ${{ matrix.app }}
+          TAG: ${{ inputs.tag }}
+          FORCE: ${{ inputs.force }}
+          CRAFT_BRIDGE_HUB: ${{ github.repository }}
+          CRAFT_BRIDGE_ERRORS: ${{ runner.temp }}/bridge-errors.txt
+          GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cfg="$RUNNER_TEMP/$APP.shared.toml"
+          if grep -q '^shared = true' "apps/$APP.toml"; then
+            cp "apps/$APP.toml" "$cfg"
+          else
+            sed "s#^repo = \".*\"#repo = \"$GITHUB_REPOSITORY\"\nshared = true#" "apps/$APP.toml" > "$cfg"
+          fi
+          args=(--config "$cfg" --out "$RUNNER_TEMP/hub-dist")
+          if [ -n "$TAG" ]; then args+=(--tag "$TAG"); fi
+          if [ "$FORCE" = "true" ]; then args+=(--force); fi
+          python -I .craft-bridge/bridge.py "${args[@]}"
+
       - name: Compare with the published release
         id: compare
         if: env.MODE == 'compare' && steps.mirror.outcome == 'success' && steps.cfg.outputs.before != ''
@@ -180,6 +206,7 @@ jobs:
           REPO: ${{ steps.cfg.outputs.repo }}
           BEFORE: ${{ steps.cfg.outputs.before }}
           MIRROR: ${{ steps.mirror.outcome }}
+          HUB: ${{ steps.hub.outcome }}
           TOKENCHECK: ${{ steps.tokencheck.outcome }}
           SAME: ${{ steps.compare.outputs.same }}
           GH_TOKEN: ${{ github.token }}
@@ -193,6 +220,9 @@ jobs:
           elif [ "$MODE" = compare ]; then result="dry run of upstream's latest passed (no release yet)"
           elif [ -n "$after" ] && [ "$after" != "$BEFORE" ]; then result="mirrored a new release"
           else result="up to date"; fi
+          if [ "$MODE" = publish ]; then
+            if [ "$HUB" = success ]; then result="$result; hub: ok"; else result="$result; hub: FAILED"; fi
+          fi
           mkdir -p "$RUNNER_TEMP/status"
           jq -n --arg app "$APP" --arg repo "$REPO" --arg tag "$after" --arg result "$result" \
             --rawfile errors <(head -c 2000 "$RUNNER_TEMP/bridge-errors.txt" 2>/dev/null || true) \
