@@ -210,6 +210,11 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: apps
+
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: status-*
@@ -232,9 +237,10 @@ jobs:
             echo "$old" | jq -e 'type == "array"' >/dev/null 2>&1 || old='[]'
           fi
           state=$(jq -s --argjson old "$old" --arg now "$now" --arg mode "$MODE" --arg run "$RUN_URL" \
+            --argjson apps "$(ls apps/*.toml | sed 's#^apps/##; s#\.toml$##' | jq -Rnc '[inputs]')" \
             'map(. + {checked: $now, mode: $mode, run: $run}) as $new
              | ($new | map(.app)) as $ids
-             | ($old | map(select(.app as $a | $ids | index($a) | not))) + $new | sort_by(.app)' status/*.json)
+             | ($old | map(select(.app as $a | ($ids | index($a) | not) and ($apps | index($a))))) + $new | sort_by(.app)' status/*.json)
           body="$RUNNER_TEMP/status.md"
           {
             echo "Every run updates this issue. Please open a new issue rather than commenting here."
