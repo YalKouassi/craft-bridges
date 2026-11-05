@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "apps": {
+    "capsulecraft": "capsulecraft-v2.1.0",
+    "chromaforge": "chromaforge-v26.45.2",
+    "earthcraft": "earthcraft-v0.2.0",
+    "mailcraft": "mailcraft-v0.10.0",
+    "notecraft": "notecraft-v0.0.8",
+    "paintcraft": "paintcraft-v0.1.1",
+    "paintrs": "paintrs-v0.7.3",
+    "picasso-suite": "picasso-suite-v0.6.3",
+    "procraft": "procraft-v0.0.4-beta",
+    "prowave": "prowave-v0.2.1",
+    "rustgis": "rustgis-v0.5.0",
+    "subcraft": "subcraft-v0.2.1",
+    "tracedraw": "tracedraw-v0.40.0",
+    "transit": "transit-v0.6.2"
+  }
+}
