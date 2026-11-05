@@ -1,5 +1,5 @@
 # Unofficial bridge: mirrors therichronicles/EarthCraft releases for Craft Unofficial Launcher.
-# Run by https://github.com/YalKouassi/craft-bridge (its README explains every key).
+# Run by sync.yml with this repo's bridge.py (the README explains every key).
 
 [bridge]
 upstream = "therichronicles/EarthCraft"

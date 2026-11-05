@@ -1,5 +1,5 @@
 # Unofficial bridge: mirrors artcraft-android/procraft releases for Craft Unofficial Launcher.
-# Run by https://github.com/YalKouassi/craft-bridge (its README explains every key).
+# Run by sync.yml with this repo's bridge.py (the README explains every key).
 # Until 2026-11 this mirrored surfrpt1/procraft (now archived as surfrpt1/procraft-old, final
 # release v0.11.0), which names artcraft-android/procraft as its maintained successor.
 

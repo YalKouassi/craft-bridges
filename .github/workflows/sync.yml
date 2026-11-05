@@ -1,7 +1,7 @@
 # Runs every bridge in apps/*.toml: one matrix job per app, every 3 hours and on demand.
 #
 # This repo is the shared release repo: every app's releases are published here, tagged
-# <id>-v<version> (craft-bridge's `shared = true`), and the launcher lists each app as
+# <id>-v<version> (bridge.py's `shared = true`), and the launcher lists each app as
 # YalKouassi/craft-bridges#<id>. This repo's own token is all it needs.
 #
 # Modes:
@@ -86,13 +86,6 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Check out craft-bridge
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: YalKouassi/craft-bridge
-          path: .craft-bridge
-          persist-credentials: false
-
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.12'
@@ -136,7 +129,7 @@ jobs:
             args+=(--force)
           fi
           if [ -n "$tag" ]; then args+=(--tag "$tag"); fi
-          python -I .craft-bridge/bridge.py "${args[@]}"
+          python -I bridge.py "${args[@]}"
 
       - name: Compare with the published release
         id: compare
@@ -193,10 +186,8 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
+      # Pushes latest.json (below), so it keeps the token.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-          sparse-checkout: apps
 
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -246,3 +237,24 @@ jobs:
           else
             gh issue create --repo "$GITHUB_REPOSITORY" --title "Sync status" --body-file "$body"
           fi
+
+      # latest.json names each app's newest release here. The launcher reads it from
+      # raw.githubusercontent.com when GitHub's API refuses it (60 requests an hour without a
+      # token), so the apps stay listed. Committed only when a tag changes.
+      - name: Update latest.json
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ids=$(ls apps/*.toml | sed 's#^apps/##; s#\.toml$##' | jq -Rnc '[inputs]')
+          gh api --paginate "repos/$GITHUB_REPOSITORY/releases?per_page=100" --jq '.[] | select(.draft | not) | select(.prerelease | not) | .tag_name' > "$RUNNER_TEMP/tags.txt"
+          jq -Rn --argjson ids "$ids" '
+            [inputs] as $tags
+            | {schema: 1, apps: ($ids | map(. as $id | {key: $id, value: ([$tags[] | select(startswith($id + "-v"))][0])}) | map(select(.value != null)) | from_entries)}' < "$RUNNER_TEMP/tags.txt" > latest.json
+          if git diff --quiet -- latest.json && git ls-files --error-unmatch latest.json >/dev/null 2>&1; then
+            echo "latest.json unchanged"; exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add latest.json
+          git commit -m "latest.json: $(jq -c .apps latest.json | head -c 200)"
+          git push
