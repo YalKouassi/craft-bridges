@@ -1,0 +1,40 @@
+# Unofficial bridge: mirrors yjid/kensaku releases for Craft Unofficial Launcher.
+# Run by sync.yml with this repo's bridge.py (the README explains every key).
+
+[bridge]
+upstream = "yjid/kensaku"
+repo = "YalKouassi/craft-bridges"
+shared = true
+upstream_sums = ["SHA256SUMS"]
+# Not mirrored: the NSIS setup .exe files, the MSIs (Windows gets the portable zips; their
+# kensaku.exe carries the release's version), and the standalone CLI binaries.
+skip = ['-setup\.exe$', '\.msi$', '^kensaku-cli-']
+
+[descriptor]
+id = "kensaku"
+name = "Kensaku"
+tagline = "Find anything on your computer: file names, documents, images and code"
+publisher = "Yash Jangid"                 # bundle.publisher in upstream's tauri.conf.json
+bundle_id = "com.gochi.kensaku"           # identifier in upstream's tauri.conf.json
+website = "https://github.com/yjid/kensaku"
+color = "#2e7d6b"
+
+[icon]
+url = "https://raw.githubusercontent.com/{upstream}/{tag}/src-tauri/icons/128x128@2x.png"
+
+# The portable zips hold kensaku.exe at their root.
+[[rename]]
+match = 'kensaku-portable-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-(?P<arch>x64|arm64)\.zip'
+to = '{id}-{version}-windows-{arch}-portable.zip'
+
+[[rename]]
+match = 'kensaku_(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)_amd64(?P<ext>\.AppImage|\.deb)'
+to = '{id}-{version}-linux-x86_64{ext}'
+
+[[rename]]
+match = 'kensaku-(?P<version>[0-9]+\.[0-9]+\.[0-9]+)-1\.x86_64\.rpm'
+to = '{id}-{version}-linux-x86_64.rpm'
+
+[[rename]]
+match = 'kensaku_(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)_universal\.dmg'
+to = '{id}-{version}-macos-universal.dmg'

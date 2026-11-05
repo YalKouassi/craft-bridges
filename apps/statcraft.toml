@@ -1,0 +1,33 @@
+# Unofficial bridge: mirrors kobaltgit/StatCraft releases for Craft Unofficial Launcher.
+# Run by sync.yml with this repo's bridge.py (the README explains every key).
+
+[bridge]
+upstream = "kobaltgit/StatCraft"
+repo = "YalKouassi/craft-bridges"
+shared = true
+# Windows only. Not mirrored: the installer .exe; the Linux .deb and tarball, whose program is
+# statcraft_app (the launcher opens a Linux install as `statcraft`); and the macOS builds, whose
+# bundle id (org.storytold.statcraft) borrows ArtCraft's GitHub name, so the bridge uses its own id
+# and the launcher couldn't recognise an installed copy. Upstream publishes no checksum file;
+# downloads are checked against GitHub's own digests.
+skip = ['-installer\.exe$', '^statcraft-linux-', '^statcraft-macos-']
+
+[descriptor]
+id = "statcraft"
+name = "StatCraft"
+tagline = "Statistical analysis package in pure, safe Rust"
+publisher = "kobaltgit"
+bundle_id = "io.github.kobaltgit.statcraft"
+website = "https://github.com/kobaltgit/StatCraft"
+color = "#1a8cff"
+
+[icon]
+url = "https://raw.githubusercontent.com/{upstream}/{tag}/assets/icon-256.png"
+
+# Upstream's zip holds statcraft_app.exe (ProductVersion matches the tag) at its root, beside
+# locales/; the launcher needs <id>.exe, so the zip is repacked with the executable renamed. Its
+# name carries no version: {version} comes from the tag.
+[[rename]]
+match = 'statcraft-windows-x64\.zip'
+to = '{id}-{version}-windows-x64-portable.zip'
+exe = "statcraft_app.exe"
