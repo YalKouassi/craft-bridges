@@ -201,23 +201,35 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           now=$(date -u '+%Y-%m-%d %H:%M UTC')
+          number=$(gh issue list --repo "$GITHUB_REPOSITORY" --state all --search 'Sync status in:title' --json number,title --jq 'map(select(.title == "Sync status"))[0].number // empty')
+          # The issue keeps every app's last result in a hidden comment, so a run for a few apps
+          # only replaces their rows.
+          old='[]'
+          if [ -n "$number" ]; then
+            old=$(gh issue view "$number" --repo "$GITHUB_REPOSITORY" --json body --jq .body | tr -d '\r' | sed -n 's/^<!-- state: \([A-Za-z0-9+/=]*\) -->$/\1/p' | base64 -d 2>/dev/null) || old='[]'
+            echo "$old" | jq -e 'type == "array"' >/dev/null 2>&1 || old='[]'
+          fi
+          state=$(jq -s --argjson old "$old" --arg now "$now" --arg mode "$MODE" --arg run "$RUN_URL" \
+            'map(. + {checked: $now, mode: $mode, run: $run}) as $new
+             | ($new | map(.app)) as $ids
+             | ($old | map(select(.app as $a | $ids | index($a) | not))) + $new | sort_by(.app)' status/*.json)
           body="$RUNNER_TEMP/status.md"
           {
             echo "Every run updates this issue. Please open a new issue rather than commenting here."
             echo
             echo "Last run: $now, mode **$MODE** ([log]($RUN_URL))."
             echo
-            echo "| App | Release repo | Latest release | Result |"
-            echo "|---|---|---|---|"
-            jq -rs 'sort_by(.app)[] | "| \(.app) | [\(.repo)](https://github.com/\(.repo)) | \(if .tag == "" then "none yet" else "[\(.tag)](https://github.com/\(.repo)/releases/tag/\(.tag))" end) | \(.result) |"' status/*.json
-            failed=$(jq -rs '[.[] | select(.errors != "")] | length' status/*.json)
-            if [ "$failed" -gt 0 ]; then
+            echo "| App | Release repo | Latest release | Last checked | Result |"
+            echo "|---|---|---|---|---|"
+            echo "$state" | jq -r '.[] | "| \(.app) | [\(.repo)](https://github.com/\(.repo)) | \(if .tag == "" then "none yet" else "[\(.tag)](https://github.com/\(.repo)/releases/tag/\(.tag))" end) | [\(.checked)](\(.run)) (\(.mode)) | \(.result) |"'
+            if [ "$(echo "$state" | jq '[.[] | select(.errors != "")] | length')" -gt 0 ]; then
               echo
               echo "## What went wrong"
-              jq -rs '.[] | select(.errors != "") | "\n### \(.app)\n\n~~~~text\n\(.errors | gsub("~~~~"; "~ ~ ~ ~"))\n~~~~"' status/*.json
+              echo "$state" | jq -r '.[] | select(.errors != "") | "\n### \(.app)\n\n~~~~text\n\(.errors | gsub("~~~~"; "~ ~ ~ ~"))\n~~~~"'
             fi
+            echo
+            echo "<!-- state: $(echo "$state" | jq -c . | base64 -w0) -->"
           } > "$body"
-          number=$(gh issue list --repo "$GITHUB_REPOSITORY" --state all --search 'Sync status in:title' --json number,title --jq 'map(select(.title == "Sync status"))[0].number // empty')
           if [ -n "$number" ]; then
             gh issue edit "$number" --repo "$GITHUB_REPOSITORY" --body-file "$body"
           else
