@@ -1,0 +1,47 @@
+# Unofficial bridge: mirrors fabox-os/Pro-Wave releases for Craft Unofficial Launcher.
+# Run by https://github.com/YalKouassi/craft-bridge (its README explains every key).
+
+[bridge]
+upstream = "fabox-os/Pro-Wave"
+repo = "YalKouassi/prowave-for-unofficial-launcher"
+# Upstream publishes no checksum file; GitHub's own asset digests are checked.
+# Not mirrored: the macOS zip (the launcher installs macOS apps from a .dmg only).
+skip = ['^prowave-macos-']
+
+[descriptor]
+id = "prowave"
+name = "ProWave"
+tagline = "Music production DAW with MIDI and audio tracks, piano roll, mixer and synth"
+publisher = "fabox-os"
+bundle_id = "studio.prowave.Studio"   # upstream's Flatpak id
+website = "https://github.com/fabox-os/Pro-Wave"
+web_demo = "https://playground.daijro.dev/head/pro-wave/"   # playground.daijro.dev's build of upstream's latest commit
+color = "#0393f8"
+
+[icon]
+url = "https://raw.githubusercontent.com/{upstream}/{tag}/crates/prowave-app/assets/icon-256.png"
+
+# Upstream's zip and tarball carry no version in their names; the version comes from the tag.
+[[rename]]
+match = 'prowave-windows-x86_64\.zip'
+to = '{id}-{version}-windows-x64-portable.zip'
+
+[[rename]]
+match = 'prowave-linux-x86_64\.tar\.gz'
+to = '{id}-{version}-linux-x86_64.tar.gz'
+
+[[rename]]
+match = 'Pro_Wave-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-x86_64\.AppImage'
+to = '{id}-{version}-linux-x86_64.AppImage'
+
+[[rename]]
+match = 'prowave-studio-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-1\.x86_64\.rpm'
+to = '{id}-{version}-linux-x86_64.rpm'
+
+[[rename]]
+match = 'prowave-studio-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-x86_64\.flatpak'
+to = '{id}-{version}-linux-x86_64.flatpak'
+
+[[rename]]
+match = 'prowave-studio_(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)_amd64\.deb'
+to = '{id}-{version}-linux-x86_64.deb'

@@ -1,0 +1,38 @@
+# Unofficial bridge: mirrors replicraft/PaintCraft releases for Craft Unofficial Launcher.
+# Run by https://github.com/YalKouassi/craft-bridge (its README explains every key).
+
+[bridge]
+upstream = "replicraft/PaintCraft"
+repo = "YalKouassi/paintcraft-for-unofficial-launcher"
+upstream_sums = ["SHA256SUMS.txt"]
+# Not mirrored: the setup .exe files (the launcher installs the MSI and the portable zip), the
+# macOS self-update zips and the CLI-only builds.
+skip = ['-windows-(?:x64|arm64)\.exe$', '-update\.zip$', '^paintcraft-cli-']
+
+[descriptor]
+id = "paintcraft"
+name = "PaintCraft"
+tagline = "A faithful cross-platform Paint.NET and MS Paint reimplementation"
+publisher = "Replicraft"
+bundle_id = "io.github.replicraft.PaintCraft"   # CFBundleIdentifier in upstream's Info.plist
+msi_publisher = "Replicraft"                    # Manufacturer in upstream's MSI
+website = "https://github.com/replicraft/PaintCraft"
+web_demo = "https://playground.daijro.dev/head/paintcraft/"   # playground.daijro.dev's build of upstream's latest commit
+color = "#2f6fd6"
+
+[icon]
+url = "https://raw.githubusercontent.com/{upstream}/{tag}/apps/paintcraft-web/public/icons/paintcraft-icon-256.png"
+
+[[rename]]
+match = 'paintcraft-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-windows-(?P<arch>x64|arm64)(?P<ext>-portable\.zip|\.msi)'
+to = '{id}-{version}-windows-{arch}{ext}'
+
+[[rename]]
+match = 'paintcraft-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-macos-(?P<arch>x64|arm64)\.dmg'
+to = '{id}-{version}-macos-{arch}.dmg'
+map = { arch = { x64 = "x86_64" } }
+
+[[rename]]
+match = 'paintcraft-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-linux-(?P<arch>x64|arm64)(?P<ext>\.tar\.gz|\.AppImage|\.deb|\.rpm)'
+to = '{id}-{version}-linux-{arch}{ext}'
+map = { arch = { x64 = "x86_64", amd64 = "x86_64", arm64 = "aarch64" } }

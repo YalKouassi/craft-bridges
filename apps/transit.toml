@@ -1,0 +1,39 @@
+# Unofficial bridge: mirrors transit-audio/transit releases for Craft Unofficial Launcher.
+# Run by https://github.com/YalKouassi/craft-bridge (its README explains every key).
+
+[bridge]
+upstream = "transit-audio/transit"
+repo = "YalKouassi/transit-for-unofficial-launcher"
+# Upstream publishes no checksum file; GitHub's own asset digests are checked.
+# Not mirrored: AppImage delta files and the macOS tarball (the launcher installs the .dmg).
+skip = ['\.zsync$', '-macos-arm64\.tar\.gz$']
+
+[descriptor]
+id = "transit"
+name = "transit"
+tagline = "A DAW with native ASIO, measured latency and isolated plug-ins"
+publisher = "Derek Wright"
+bundle_id = "dev.derekmwright.transit"   # upstream's Flatpak id and CFBundleIdentifier
+msi_publisher = "Derek Wright"           # Manufacturer in upstream's MSI
+website = "https://github.com/transit-audio/transit"
+web_demo = "https://playground.daijro.dev/head/transit/"   # playground.daijro.dev's build of upstream's latest commit
+color = "#4cb1f0"
+
+[icon]
+url = "https://raw.githubusercontent.com/{upstream}/{tag}/assets/app-icon/hicolor/256x256/apps/transit.png"
+
+[[rename]]
+match = 'transit-v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-windows-x86_64\.zip'
+to = '{id}-{version}-windows-x64-portable.zip'
+
+[[rename]]
+match = 'transit-v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-windows-x86_64\.msi'
+to = '{id}-{version}-windows-x64.msi'
+
+[[rename]]
+match = 'transit-v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-(?P<target>linux-x86_64|macos-arm64)(?P<ext>\.tar\.gz|\.dmg)'
+to = '{id}-{version}-{target}{ext}'
+
+[[rename]]
+match = 'transit-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-linux-x86_64(?P<ext>\.AppImage|\.deb|\.rpm)'
+to = '{id}-{version}-linux-x86_64{ext}'

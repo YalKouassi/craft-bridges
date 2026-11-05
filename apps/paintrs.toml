@@ -1,0 +1,34 @@
+# Unofficial bridge: mirrors daijro/paint.rs releases for Craft Unofficial Launcher.
+# Run by https://github.com/YalKouassi/craft-bridge (its README explains every key).
+
+[bridge]
+upstream = "daijro/paint.rs"
+repo = "YalKouassi/paintrs-for-unofficial-launcher"
+# Upstream publishes no checksum file; GitHub's own asset digests are checked.
+# Not mirrored: the AVX2 and musl variants (one build per platform, the baseline one), the macOS
+# tarballs (the launcher installs macOS apps from a .dmg only) and the web build.
+skip = ['-avx2', '-musl', '-macos-', '^paintrs-web-']
+
+[descriptor]
+id = "paintrs"
+name = "paint.rs"
+tagline = "A clean-room reimplementation of Paint.NET"
+publisher = "daijro"
+bundle_id = "org.paint-rs.paint"   # CFBundleIdentifier in upstream's Info.plist
+website = "https://github.com/daijro/paint.rs"
+web_demo = "https://playground.daijro.dev/paint-rs/"   # playground.daijro.dev's build of the latest release
+color = "#f74c00"
+
+# Upstream's only icon (assets/app-icon.png) is 1024 px, over the launcher's 512 px limit; icon.png
+# in this repo is that file shrunk to 256 px with craft-bridge's tools/icon.py.
+[icon]
+url = "https://raw.githubusercontent.com/YalKouassi/craft-bridges/main/icons/paintrs.png"
+
+[[rename]]
+match = 'paint\.rs-v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-windows-(?P<arch>x86_64|arm64)\.zip'
+to = '{id}-{version}-windows-{arch}-portable.zip'
+map = { arch = { x86_64 = "x64" } }
+
+[[rename]]
+match = 'paint\.rs-v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-(?P<target>linux-(?:x86_64|aarch64)|freebsd-x86_64)(?P<ext>\.tar\.gz|\.AppImage)'
+to = '{id}-{version}-{target}{ext}'

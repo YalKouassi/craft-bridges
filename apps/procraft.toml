@@ -1,0 +1,30 @@
+# Unofficial bridge: mirrors artcraft-android/procraft releases for Craft Unofficial Launcher.
+# Run by https://github.com/YalKouassi/craft-bridge (its README explains every key).
+# Until 2026-11 this mirrored surfrpt1/procraft (now archived as surfrpt1/procraft-old, final
+# release v0.11.0), which names artcraft-android/procraft as its maintained successor.
+
+[bridge]
+upstream = "artcraft-android/procraft"
+repo = "YalKouassi/procraft-for-unofficial-launcher"
+# GitHub's own asset digests are checked.
+# Not mirrored: the Android build.
+skip = ['\.apk$']
+
+[descriptor]
+id = "procraft"
+name = "ProCraft"
+tagline = "Painting app with pressure brushes, layers, animation and 3D painting"
+publisher = "ArtCraft Team"
+bundle_id = "io.github.artcraftandroid.procraft"   # upstream's Android applicationId
+former_bundles = ["com.surfrpt1.procraft"]          # the retired surfrpt1/procraft
+msi_publisher = "ArtCraft Team"                     # Manufacturer in packaging/windows/procraft.wxs
+website = "https://github.com/artcraft-android/procraft"
+color = "#0b3d3a"
+
+[icon]
+url = "https://raw.githubusercontent.com/{upstream}/{tag}/assets/app-icon/procraft-256.png"
+
+# Upstream already uses the launcher's package names, so they are kept as they are.
+[[rename]]
+match = 'procraft-(?P<version>[0-9][^-]*(?:-[0-9A-Za-z.]+)?)-(?P<rest>windows-x64-portable\.zip|windows-x64\.msi|linux-x86_64\.(?:AppImage|deb|tar\.gz))'
+to = '{id}-{version}-{rest}'

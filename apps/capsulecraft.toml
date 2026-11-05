@@ -1,0 +1,43 @@
+# Unofficial bridge: mirrors kostyk348/CapsuleCraft releases for Craft Unofficial Launcher.
+# Run by https://github.com/YalKouassi/craft-bridge (its README explains every key).
+
+[bridge]
+upstream = "kostyk348/CapsuleCraft"
+repo = "YalKouassi/capsulecraft-for-unofficial-launcher"
+upstream_sums = ["SHA256SUMS.txt"]
+# Not mirrored: the NSIS setup .exe (the launcher installs the MSI), the native zips (their
+# CapsuleCraft.exe carries no version resource, which the launcher needs to confirm a portable
+# install) and the macOS .app tarball (the launcher installs the .dmg).
+skip = ['-setup\.exe$', '^CapsuleCraft_native_', '\.app\.tar\.gz$']
+
+[descriptor]
+id = "capsulecraft"
+name = "CapsuleCraft"
+tagline = "Notes and knowledge base where every note is a plain .eml file"
+publisher = "kostyk348"
+bundle_id = "com.capsuleos.app"   # identifier in upstream's tauri.conf.json
+msi_publisher = "capsuleos"       # Manufacturer in upstream's MSI
+website = "https://github.com/kostyk348/CapsuleCraft"
+color = "#a0784f"
+# Upstream's MSI installs the program as capsuleos.exe (its Tauri binary name), not
+# capsulecraft.exe; listing that as a former id lets the launcher find the installed program.
+former_ids = ["capsuleos"]
+
+[icon]
+url = "https://raw.githubusercontent.com/{upstream}/{tag}/src-tauri/icons/128x128@2x.png"
+
+[[rename]]
+match = 'CapsuleCraft_(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)_x64_en-US\.msi'
+to = '{id}-{version}-windows-x64.msi'
+
+[[rename]]
+match = 'CapsuleCraft_(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)_amd64(?P<ext>\.AppImage|\.deb)'
+to = '{id}-{version}-linux-x86_64{ext}'
+
+[[rename]]
+match = 'CapsuleCraft-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-1\.x86_64\.rpm'
+to = '{id}-{version}-linux-x86_64.rpm'
+
+[[rename]]
+match = 'CapsuleCraft_(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)_aarch64\.dmg'
+to = '{id}-{version}-macos-aarch64.dmg'

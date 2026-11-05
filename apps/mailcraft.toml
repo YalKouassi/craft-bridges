@@ -1,0 +1,29 @@
+# Unofficial bridge: mirrors UCS-Care-Group/mailcraft releases for Craft Unofficial Launcher.
+# Run by https://github.com/YalKouassi/craft-bridge (its README explains every key).
+
+[bridge]
+upstream = "UCS-Care-Group/mailcraft"
+repo = "YalKouassi/mailcraft-for-unofficial-launcher"
+# Every download is checked against upstream's own checksum file; a mismatch aborts the run.
+upstream_sums = ["SHA256SUMS.txt"]
+# Not mirrored: AppImage delta files, provenance and signatures, the CLI-only and web builds.
+skip = ['\.zsync$', '\.intoto\.jsonl$', '\.sig$', '^mailcraft-cli-', '^mailcraft-web-']
+
+[descriptor]
+id = "mailcraft"
+name = "MailCraft"
+tagline = "Mail, calendar and contacts in pure Rust for Microsoft 365, Outlook.com and IMAP"
+publisher = "UCS Care Group"
+bundle_id = "io.github.billsecond.mailcraft"   # upstream's Flatpak, desktop-file and Info.plist id
+msi_publisher = "MailCraft contributors"        # Manufacturer in upstream's MSI
+website = "https://github.com/UCS-Care-Group/mailcraft"
+web_demo = "https://playground.daijro.dev/mailcraft/"   # playground.daijro.dev's build of the latest release
+color = "#b3202a"
+
+[icon]
+url = "https://raw.githubusercontent.com/{upstream}/{tag}/assets/app-icon/hicolor/256x256/apps/io.github.billsecond.mailcraft.png"
+
+# Upstream already names its packages by the contract: they are mirrored unchanged.
+[[rename]]
+match = 'mailcraft-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-(?P<target>(?:windows|linux|macos|freebsd)-[a-z0-9_]+)(?P<ext>-portable\.zip|\.tar\.gz|\.msi|\.dmg|\.AppImage|\.deb|\.rpm|\.flatpak)'
+to = '{id}-{version}-{target}{ext}'

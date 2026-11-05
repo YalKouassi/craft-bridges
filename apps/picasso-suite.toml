@@ -1,0 +1,40 @@
+# Unofficial bridge: mirrors fabox-os/Picasso-Suite releases for Craft Unofficial Launcher.
+# Run by https://github.com/YalKouassi/craft-bridge (its README explains every key).
+
+[bridge]
+upstream = "fabox-os/Picasso-Suite"
+repo = "YalKouassi/picasso-suite-for-unofficial-launcher"
+# Upstream publishes no checksum file; GitHub's own asset digests are checked.
+# Not mirrored: the macOS zips (the launcher installs macOS apps from a .dmg only).
+skip = ['-macos-[a-z0-9]+\.zip$']
+
+[descriptor]
+id = "picasso-suite"
+name = "Picasso Suite"
+tagline = "Non-linear video editor with Cut, Edit and Deliver pages, all formats via FFmpeg"
+publisher = "fabox-os"
+bundle_id = "io.github.fabox_os.PicassoSuite"   # upstream's Flatpak, desktop-file and AppStream id
+website = "https://github.com/fabox-os/Picasso-Suite"
+web_demo = "https://playground.daijro.dev/head/picasso-suite/"   # playground.daijro.dev's build of upstream's latest commit
+color = "#d6402b"
+
+[icon]
+url = "https://raw.githubusercontent.com/{upstream}/{tag}/assets/icon.png"
+
+# One wrapper folder with picasso-suite.exe (x64) and the FFmpeg DLLs next to it.
+[[rename]]
+match = 'picasso-suite-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-windows\.zip'
+to = '{id}-{version}-windows-x64-portable.zip'
+
+[[rename]]
+match = 'picasso-suite-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-(?P<arch>x86_64|aarch64)(?P<ext>\.AppImage|\.rpm|\.flatpak)'
+to = '{id}-{version}-linux-{arch}{ext}'
+
+[[rename]]
+match = 'picasso-suite-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)\.flatpak'
+to = '{id}-{version}-linux-x86_64.flatpak'
+
+[[rename]]
+match = 'picasso-suite-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-(?P<arch>amd64|arm64)\.deb'
+to = '{id}-{version}-linux-{arch}.deb'
+map = { arch = { x64 = "x86_64", amd64 = "x86_64", arm64 = "aarch64" } }

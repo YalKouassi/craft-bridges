@@ -1,0 +1,41 @@
+# Unofficial bridge: mirrors tracedraw/tracedraw releases for Craft Unofficial Launcher.
+# Run by https://github.com/YalKouassi/craft-bridge (its README explains every key).
+
+[bridge]
+upstream = "tracedraw/tracedraw"
+repo = "YalKouassi/tracedraw-for-unofficial-launcher"
+# Upstream publishes no checksum file; GitHub's own asset digests are checked.
+# Not mirrored: the setup .exe and the MSIX (the launcher installs the portable zip), and the
+# Android debug builds.
+skip = ['-setup\.exe$', '\.msix$', '-android-']
+
+[descriptor]
+id = "tracedraw"
+name = "TraceDraw"
+tagline = "Vector drawing and tracing"
+publisher = "Ighor Toth"
+bundle_id = "dev.tracedraw.app"   # CFBundleIdentifier in upstream's Info.plist
+website = "https://github.com/tracedraw/tracedraw"
+web_demo = "https://playground.daijro.dev/head/tracedraw/"   # playground.daijro.dev's build of upstream's latest commit
+color = "#4fb8f5"
+
+[icon]
+url = "https://raw.githubusercontent.com/{upstream}/{tag}/assets/icon/tracedraw-256.png"
+
+[[rename]]
+match = 'tracedraw-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-windows-x86_64-portable\.zip'
+to = '{id}-{version}-windows-x64-portable.zip'
+
+[[rename]]
+match = 'tracedraw-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-macos-(?P<arch>arm64|x86_64)\.dmg'
+to = '{id}-{version}-macos-{arch}.dmg'
+
+[[rename]]
+match = 'tracedraw-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-linux-(?P<arch>amd64|x86_64|arm64)(?P<ext>\.AppImage|\.tar\.gz)'
+to = '{id}-{version}-linux-{arch}{ext}'
+map = { arch = { x64 = "x86_64", amd64 = "x86_64", arm64 = "aarch64" } }
+
+[[rename]]
+match = 'tracedraw_(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)_(?P<arch>amd64|arm64)\.deb'
+to = '{id}-{version}-linux-{arch}.deb'
+map = { arch = { x64 = "x86_64", amd64 = "x86_64", arm64 = "aarch64" } }

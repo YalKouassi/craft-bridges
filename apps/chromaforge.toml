@@ -1,0 +1,31 @@
+# Unofficial bridge: mirrors emmertex/chromaforge releases for Craft Unofficial Launcher.
+# Run by https://github.com/YalKouassi/craft-bridge (its README explains every key).
+
+[bridge]
+upstream = "emmertex/chromaforge"
+repo = "YalKouassi/chromaforge-for-unofficial-launcher"
+upstream_sums = ["SHA256SUMS.txt"]
+# Not mirrored: the CLI-only, web and Android builds, AppImage delta files, the update manifest,
+# and the checksum signature.
+skip = ['-cli-', '-web-', '-android-', '\.aab$', '\.zsync$', '^latest\.json$', '\.sig$']
+
+[descriptor]
+id = "chromaforge"
+name = "Chromaforge"
+tagline = "Photo library and raw development"
+publisher = "Chromaforge contributors"
+bundle_id = "com.emmertex.chromaforge"       # [identity] app_id in upstream's brand.toml
+msi_publisher = "Chromaforge contributors"   # Manufacturer in upstream's MSI
+website = "https://github.com/emmertex/chromaforge"
+web_demo = "https://playground.daijro.dev/lightcraft-classic/"   # playground.daijro.dev's build of the latest release
+color = "#3fa3bf"
+# Upstream was called lightcraft-classic until v26.45.1 (assets and executable). Keeping it as a
+# former id lets the launcher recognise installs made from the older mirrored releases.
+former_ids = ["lightcraft-classic"]
+
+[icon]
+url = "https://raw.githubusercontent.com/{upstream}/{tag}/assets/app-icon/hicolor/256x256/apps/app.png"
+
+[[rename]]
+match = '(?:chromaforge|lightcraft-classic)-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-(?P<target>windows-(?:x64|arm64)|linux-x86_64|macos-universal)(?P<ext>-portable\.zip|\.tar\.gz|\.msi|\.AppImage|\.deb|\.rpm|\.flatpak|\.dmg)'
+to = '{id}-{version}-{target}{ext}'
