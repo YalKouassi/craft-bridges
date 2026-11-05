@@ -219,10 +219,16 @@ Once a release passes the checker:
   [YalKouassi/craft-bridges](https://github.com/YalKouassi/craft-bridges/issues/new?template=add-app.yml)
   with your repo URL. Being listed vouches for nothing: the launcher shows every unofficial app with
   a notice that ArtCraft and the launcher's maintainers don't review or support it.
+- **The maintainer picks your category.** The launcher groups its list under a fixed set of
+  headings: `graphics`, `audio-video`, `3d`, `maps`, `productivity`, `developer`, `utilities`. The
+  category is set on your entry in the index, not in `craft-app.json`. Don't add a `category` field
+  to your descriptor: it's an unknown field, so the release would be refused. You can suggest one
+  in your issue.
 
-If your app is currently mirrored by a bridge, the bridge notices your first release that
-attaches a valid `craft-app.json`. From then on it stops publishing, the index is pointed at your
-repo, and the bridge is retired.
+If your app is currently mirrored by a bridge in this repo, the bridge checks each new release of
+yours. When one attaches a valid `craft-app.json`, the bridge publishes nothing more for your app
+and flags it for the maintainer. The maintainer then points the index entry at your repo and
+removes the bridge. Until that's done, the launcher keeps offering the last bridged release.
 
 ## Notes for coding agents
 
