@@ -3,7 +3,8 @@
 
 [bridge]
 upstream = "fabox-os/Pro-Wave"
-repo = "YalKouassi/prowave-for-unofficial-launcher"
+repo = "YalKouassi/craft-bridges"
+shared = true
 # Upstream publishes no checksum file; GitHub's own asset digests are checked.
 # Not mirrored: the macOS zip (the launcher installs macOS apps from a .dmg only).
 skip = ['^prowave-macos-']

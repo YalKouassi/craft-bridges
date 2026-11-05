@@ -3,7 +3,8 @@
 
 [bridge]
 upstream = "UCS-Care-Group/mailcraft"
-repo = "YalKouassi/mailcraft-for-unofficial-launcher"
+repo = "YalKouassi/craft-bridges"
+shared = true
 # Every download is checked against upstream's own checksum file; a mismatch aborts the run.
 upstream_sums = ["SHA256SUMS.txt"]
 # Not mirrored: AppImage delta files, provenance and signatures, the CLI-only and web builds.

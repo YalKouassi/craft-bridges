@@ -5,7 +5,8 @@
 
 [bridge]
 upstream = "artcraft-android/procraft"
-repo = "YalKouassi/procraft-for-unofficial-launcher"
+repo = "YalKouassi/craft-bridges"
+shared = true
 # GitHub's own asset digests are checked.
 # Not mirrored: the Android build.
 skip = ['\.apk$']

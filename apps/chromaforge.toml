@@ -3,7 +3,8 @@
 
 [bridge]
 upstream = "emmertex/chromaforge"
-repo = "YalKouassi/chromaforge-for-unofficial-launcher"
+repo = "YalKouassi/craft-bridges"
+shared = true
 upstream_sums = ["SHA256SUMS.txt"]
 # Not mirrored: the CLI-only, web and Android builds, AppImage delta files, the update manifest,
 # and the checksum signature.

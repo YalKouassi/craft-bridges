@@ -1,11 +1,14 @@
 # Runs every bridge in apps/*.toml: one matrix job per app, every 3 hours and on demand.
 #
-# Two modes:
-#   publish  mirror upstream's latest release into the app's *-for-unofficial-launcher repo.
-#            Needs the BRIDGES_TOKEN secret (a token that can write releases to those repos).
-#   compare  publish nothing: rebuild the release each bridge repo has as its latest and check
-#            that the rebuilt SHA256SUMS.txt matches the published one. Only reads, so it runs
-#            with this repo's own token. For apps with no release yet, it dry-runs upstream's latest.
+# This repo is the shared release repo: every app's releases are published here, tagged
+# <id>-v<version> (craft-bridge's `shared = true`), and the launcher lists each app as
+# YalKouassi/craft-bridges#<id>. This repo's own token is all it needs.
+#
+# Modes:
+#   publish  mirror upstream's latest release if this repo doesn't have it yet.
+#   compare  publish nothing: rebuild the app's last release here and check that the rebuilt
+#            SHA256SUMS.txt matches the published one. For an app with no release yet, it
+#            dry-runs upstream's latest.
 # Scheduled runs use the HUB_MODE repository variable (compare when it isn't set).
 name: sync
 
@@ -15,9 +18,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: publish, compare, or token-check (create and delete a draft release in each bridge repo)
+        description: publish or compare
         type: choice
-        options: [compare, publish, token-check]
+        options: [compare, publish]
         default: compare
       apps:
         description: App ids separated by spaces (empty = all of apps/)
@@ -33,8 +36,8 @@ on:
         default: false
 
 permissions:
-  contents: write   # publishing into this repo, the shared release repo (see "Mirror into the hub")
-  issues: write   # this repo's "Sync status" issue
+  contents: write   # publishing the releases into this repo
+  issues: write     # the "Sync status" issue
 
 concurrency:
   group: sync
@@ -94,6 +97,8 @@ jobs:
         with:
           python-version: '3.12'
 
+      # The app's newest release here: the newest <id>-v… tag (the repo's own "latest" is
+      # whichever app published last).
       - name: Read the config
         id: cfg
         env:
@@ -102,29 +107,11 @@ jobs:
         run: |
           repo=$(python -I -c 'import sys, tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["bridge"]["repo"])' "apps/$APP.toml")
           echo "repo=$repo" >> "$GITHUB_OUTPUT"
-          echo "before=$(gh release view --repo "$repo" --json tagName --jq .tagName 2>/dev/null || true)" >> "$GITHUB_OUTPUT"
-
-      # token-check: proves BRIDGES_TOKEN can write releases to the bridge repo by creating a
-      # draft release (never public) and deleting it again. Publishes nothing.
-      - name: Check the token can write releases
-        id: tokencheck
-        if: env.MODE == 'token-check'
-        env:
-          GH_TOKEN: ${{ secrets.BRIDGES_TOKEN }}
-          REPO: ${{ steps.cfg.outputs.repo }}
-          CRAFT_BRIDGE_ERRORS: ${{ runner.temp }}/bridge-errors.txt
-        run: |
-          if [ -z "$GH_TOKEN" ]; then echo "BRIDGES_TOKEN isn't set" | tee "$CRAFT_BRIDGE_ERRORS"; exit 1; fi
-          tag="token-check-$GITHUB_RUN_ID"
-          if ! out=$(gh api -X POST "repos/$REPO/releases" -f tag_name="$tag" -f name="$tag" -F draft=true --jq .id 2>&1); then
-            echo "BRIDGES_TOKEN can't create releases in $REPO: $out" | tee "$CRAFT_BRIDGE_ERRORS"; exit 1
-          fi
-          gh api -X DELETE "repos/$REPO/releases/$out"
-          echo "BRIDGES_TOKEN can write releases to $REPO"
+          before=$(gh api "repos/$repo/releases?per_page=100" --jq "[.[] | select(.draft | not) | select(.tag_name | startswith(\"$APP-v\"))][0].tag_name // empty" 2>/dev/null || true)
+          echo "before=$before" >> "$GITHUB_OUTPUT"
 
       - name: Mirror
         id: mirror
-        if: env.MODE != 'token-check'
         env:
           APP: ${{ matrix.app }}
           TAG: ${{ inputs.tag }}
@@ -132,49 +119,23 @@ jobs:
           BEFORE: ${{ steps.cfg.outputs.before }}
           CRAFT_BRIDGE_HUB: ${{ github.repository }}
           CRAFT_BRIDGE_ERRORS: ${{ runner.temp }}/bridge-errors.txt
-          # Publishing writes to another repo, so it needs BRIDGES_TOKEN; comparing only reads.
-          GITHUB_TOKEN: ${{ env.MODE == 'publish' && secrets.BRIDGES_TOKEN || github.token }}
-          GH_TOKEN: ${{ env.MODE == 'publish' && secrets.BRIDGES_TOKEN || github.token }}
-        run: |
-          if [ "$MODE" = publish ] && [ -z "$GH_TOKEN" ]; then
-            echo "::error::publish mode needs the BRIDGES_TOKEN secret" | tee "$CRAFT_BRIDGE_ERRORS"; exit 2
-          fi
-          args=(--config "apps/$APP.toml" --out "$RUNNER_TEMP/dist")
-          if [ "$MODE" = compare ]; then
-            args+=(--dry-run)
-            # Rebuild exactly what the bridge repo published last, so the two can be compared.
-            tag=${TAG:-$BEFORE}
-          else
-            tag=$TAG
-            if [ "$FORCE" = "true" ]; then args+=(--force); fi
-          fi
-          if [ -n "$tag" ]; then args+=(--tag "$tag"); fi
-          python -I .craft-bridge/bridge.py "${args[@]}"
-
-      # The move to one shared release repo: the app's release also goes into this repo, tagged
-      # <id>-v<version> (craft-bridge's `shared = true`), from the same config with `repo` pointed
-      # here. Runs while the launcher's index still lists the old repos.
-      - name: Mirror into the hub
-        id: hub
-        if: env.MODE == 'publish' && !cancelled()
-        env:
-          APP: ${{ matrix.app }}
-          TAG: ${{ inputs.tag }}
-          FORCE: ${{ inputs.force }}
-          CRAFT_BRIDGE_HUB: ${{ github.repository }}
-          CRAFT_BRIDGE_ERRORS: ${{ runner.temp }}/bridge-errors.txt
           GITHUB_TOKEN: ${{ github.token }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          cfg="$RUNNER_TEMP/$APP.shared.toml"
-          if grep -q '^shared = true' "apps/$APP.toml"; then
-            cp "apps/$APP.toml" "$cfg"
-          else
-            sed "s#^repo = \".*\"#repo = \"$GITHUB_REPOSITORY\"\nshared = true#" "apps/$APP.toml" > "$cfg"
+          args=(--config "apps/$APP.toml" --out "$RUNNER_TEMP/dist")
+          tag=$TAG
+          if [ "$MODE" = compare ]; then
+            args+=(--dry-run)
+            # Rebuild what was published last: <id>-v1.2.3 came from upstream's v1.2.3 (or 1.2.3).
+            if [ -z "$tag" ] && [ -n "$BEFORE" ]; then
+              version=${BEFORE#"$APP-v"}
+              tag="v$version"
+              gh api "repos/$(python -I -c 'import sys, tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["bridge"]["upstream"])' "apps/$APP.toml")/releases/tags/$tag" --silent 2>/dev/null || tag=$version
+            fi
+          elif [ "$FORCE" = "true" ]; then
+            args+=(--force)
           fi
-          args=(--config "$cfg" --out "$RUNNER_TEMP/hub-dist")
-          if [ -n "$TAG" ]; then args+=(--tag "$TAG"); fi
-          if [ "$FORCE" = "true" ]; then args+=(--force); fi
+          if [ -n "$tag" ]; then args+=(--tag "$tag"); fi
           python -I .craft-bridge/bridge.py "${args[@]}"
 
       - name: Compare with the published release
@@ -183,17 +144,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ steps.cfg.outputs.repo }}
-          TAG: ${{ inputs.tag || steps.cfg.outputs.before }}
+          TAG: ${{ steps.cfg.outputs.before }}
         run: |
           built="$RUNNER_TEMP/dist/$TAG/SHA256SUMS.txt"
-          [ -f "$built" ] || built=$(find "$RUNNER_TEMP/dist" -name SHA256SUMS.txt | head -n1)
           gh release download "$TAG" --repo "$REPO" --pattern SHA256SUMS.txt --dir "$RUNNER_TEMP/published"
           if diff <(sort "$RUNNER_TEMP/published/SHA256SUMS.txt" | tr -d '\r') <(sort "$built" | tr -d '\r') > "$RUNNER_TEMP/diff.txt"; then
             echo "same=yes" >> "$GITHUB_OUTPUT"
             echo "Identical to $REPO $TAG"
           else
             echo "same=no" >> "$GITHUB_OUTPUT"
-            echo "::error title=${{ matrix.app }}::the rebuilt $TAG differs from $REPO's"
+            echo "::error title=${{ matrix.app }}::the rebuilt $TAG differs from the published one"
             cat "$RUNNER_TEMP/diff.txt"
             cp "$RUNNER_TEMP/diff.txt" "$RUNNER_TEMP/bridge-errors.txt"
             exit 1
@@ -206,23 +166,16 @@ jobs:
           REPO: ${{ steps.cfg.outputs.repo }}
           BEFORE: ${{ steps.cfg.outputs.before }}
           MIRROR: ${{ steps.mirror.outcome }}
-          HUB: ${{ steps.hub.outcome }}
-          TOKENCHECK: ${{ steps.tokencheck.outcome }}
           SAME: ${{ steps.compare.outputs.same }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          after=$(gh release view --repo "$REPO" --json tagName --jq .tagName 2>/dev/null || true)
-          if [ "$MODE" = token-check ]; then
-            if [ "$TOKENCHECK" = success ]; then result="token can write releases"; else result="token check FAILED"; fi
-          elif [ "$MIRROR" != success ]; then result="failed"
+          after=$(gh api "repos/$REPO/releases?per_page=100" --jq "[.[] | select(.draft | not) | select(.tag_name | startswith(\"$APP-v\"))][0].tag_name // empty" 2>/dev/null || true)
+          if [ "$MIRROR" != success ]; then result="failed"
           elif [ "$MODE" = compare ] && [ "$SAME" = yes ]; then result="rebuilt $BEFORE: identical"
           elif [ "$MODE" = compare ] && [ "$SAME" = no ]; then result="rebuilt $BEFORE: DIFFERENT"
           elif [ "$MODE" = compare ]; then result="dry run of upstream's latest passed (no release yet)"
           elif [ -n "$after" ] && [ "$after" != "$BEFORE" ]; then result="mirrored a new release"
           else result="up to date"; fi
-          if [ "$MODE" = publish ]; then
-            if [ "$HUB" = success ]; then result="$result; hub: ok"; else result="$result; hub: FAILED"; fi
-          fi
           mkdir -p "$RUNNER_TEMP/status"
           jq -n --arg app "$APP" --arg repo "$REPO" --arg tag "$after" --arg result "$result" \
             --rawfile errors <(head -c 2000 "$RUNNER_TEMP/bridge-errors.txt" 2>/dev/null || true) \
@@ -277,9 +230,9 @@ jobs:
             echo
             echo "Last run: $now, mode **$MODE** ([log]($RUN_URL))."
             echo
-            echo "| App | Release repo | Latest release | Last checked | Result |"
-            echo "|---|---|---|---|---|"
-            echo "$state" | jq -r '.[] | "| \(.app) | [\(.repo)](https://github.com/\(.repo)) | \(if .tag == "" then "none yet" else "[\(.tag)](https://github.com/\(.repo)/releases/tag/\(.tag))" end) | [\(.checked)](\(.run)) (\(.mode)) | \(.result) |"'
+            echo "| App | Latest release | Last checked | Result |"
+            echo "|---|---|---|---|"
+            echo "$state" | jq -r '.[] | "| \(.app) | \(if .tag == "" then "none yet" else "[\(.tag)](https://github.com/\(.repo)/releases/tag/\(.tag))" end) | [\(.checked)](\(.run)) (\(.mode)) | \(.result) |"'
             if [ "$(echo "$state" | jq '[.[] | select(.errors != "")] | length')" -gt 0 ]; then
               echo
               echo "## What went wrong"

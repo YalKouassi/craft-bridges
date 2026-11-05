@@ -3,7 +3,8 @@
 
 [bridge]
 upstream = "transit-audio/transit"
-repo = "YalKouassi/transit-for-unofficial-launcher"
+repo = "YalKouassi/craft-bridges"
+shared = true
 # Upstream publishes no checksum file; GitHub's own asset digests are checked.
 # Not mirrored: AppImage delta files and the macOS tarball (the launcher installs the .dmg).
 skip = ['\.zsync$', '-macos-arm64\.tar\.gz$']

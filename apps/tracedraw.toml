@@ -3,7 +3,8 @@
 
 [bridge]
 upstream = "tracedraw/tracedraw"
-repo = "YalKouassi/tracedraw-for-unofficial-launcher"
+repo = "YalKouassi/craft-bridges"
+shared = true
 # Upstream publishes no checksum file; GitHub's own asset digests are checked.
 # Not mirrored: the setup .exe and the MSIX (the launcher installs the portable zip), and the
 # Android debug builds.

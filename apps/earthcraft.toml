@@ -3,7 +3,8 @@
 
 [bridge]
 upstream = "therichronicles/EarthCraft"
-repo = "YalKouassi/earthcraft-for-unofficial-launcher"
+repo = "YalKouassi/craft-bridges"
+shared = true
 upstream_sums = ["SHA256SUMS.txt"]
 # Not mirrored: the portable zips (their earthcraft.exe carries no version resource, which the
 # launcher needs to confirm a portable install, so Windows gets the MSI), the setup .exe, snaps,

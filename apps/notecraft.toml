@@ -3,7 +3,8 @@
 
 [bridge]
 upstream = "AlienTechSoftware/notecraft"
-repo = "YalKouassi/notecraft-for-unofficial-launcher"
+repo = "YalKouassi/craft-bridges"
+shared = true
 # Used whenever a release attaches it (v0.0.7 doesn't). GitHub's asset digests are always checked.
 upstream_sums = ["SHA256SUMS.txt"]
 skip = ['\.jfif$', '\.gif$', '\.zsync$']

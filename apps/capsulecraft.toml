@@ -3,7 +3,8 @@
 
 [bridge]
 upstream = "kostyk348/CapsuleCraft"
-repo = "YalKouassi/capsulecraft-for-unofficial-launcher"
+repo = "YalKouassi/craft-bridges"
+shared = true
 upstream_sums = ["SHA256SUMS.txt"]
 # Not mirrored: the NSIS setup .exe (the launcher installs the MSI), the native zips (their
 # CapsuleCraft.exe carries no version resource, which the launcher needs to confirm a portable
