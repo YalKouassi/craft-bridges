@@ -1,0 +1,39 @@
+# Unofficial bridge: mirrors javy-fernandez/dotcraft releases for Craft Unofficial Launcher.
+# Run by sync.yml with this repo's bridge.py (the README explains every key).
+
+[bridge]
+upstream = "javy-fernandez/dotcraft"
+repo = "YalKouassi/craft-bridges"
+shared = true
+# Upstream publishes no checksum file; downloads are checked against GitHub's own digests.
+# Not mirrored: the zipped .app (the .dmg carries the same build) and the screenshots some
+# releases attach.
+skip = ['-macos-universal\.zip$', '\.png$']
+
+[descriptor]
+id = "dotcraft"
+name = "DotCraft"
+tagline = "Lightweight native IDE for .NET and C#, with debugging and Git"
+publisher = "Javy Fernández"
+bundle_id = "app.dotcraft"                # CFBundleIdentifier in upstream's scripts/bundle.sh
+website = "https://github.com/javy-fernandez/dotcraft"
+color = "#6b4fbb"
+
+[icon]
+url = "https://raw.githubusercontent.com/{upstream}/{tag}/assets/icon.png"
+
+# The zips hold DotCraft/DotCraft.exe, one wrapper folder the launcher accepts as it is. The exe has
+# no version resource, so it installs from launcher 0.12 on (older launchers roll it back).
+[[rename]]
+match = 'DotCraft-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-windows-(?P<arch>x64|arm64)\.zip'
+to = '{id}-{version}-windows-{arch}-portable.zip'
+
+# The tarballs hold DotCraft/dotcraft.
+[[rename]]
+match = 'DotCraft-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-linux-(?P<arch>x64|arm64)\.tar\.gz'
+to = '{id}-{version}-linux-{arch}.tar.gz'
+map = { arch = { x64 = "x86_64", arm64 = "aarch64" } }
+
+[[rename]]
+match = 'DotCraft-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)-universal\.dmg'
+to = '{id}-{version}-macos-universal.dmg'
