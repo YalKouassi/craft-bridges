@@ -22,7 +22,7 @@
     "rustgis": "rustgis-v0.5.0",
     "statcraft": "statcraft-v0.2.1",
     "subcraft": "subcraft-v0.2.1",
-    "tracedraw": "tracedraw-v0.40.0",
+    "tracedraw": "tracedraw-v0.41.0",
     "transit": "transit-v0.6.2"
   }
 }
