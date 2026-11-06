@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "apps": {
-    "altered-audio-editor": "altered-audio-editor-v0.17.0",
+    "altered-audio-editor": "altered-audio-editor-v0.17.1",
     "bimcraft": "bimcraft-v0.10.0",
     "capsulecraft": "capsulecraft-v2.1.0",
     "chromaforge": "chromaforge-v26.45.2",
