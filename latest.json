@@ -1,12 +1,12 @@
 {
   "schema": 1,
   "apps": {
-    "altered-audio-editor": "altered-audio-editor-v0.21.0",
+    "altered-audio-editor": "altered-audio-editor-v0.22.0",
     "bimcraft": "bimcraft-v0.11.0",
     "capsulecraft": "capsulecraft-v2.8.0",
     "chromaforge": "chromaforge-v26.46.1",
     "crabcraft": "crabcraft-v0.5.0",
-    "datacraft": "datacraft-v0.14.1",
+    "datacraft": "datacraft-v0.15.0",
     "dotcraft": "dotcraft-v0.5.0",
     "earthcraft": "earthcraft-v0.2.0",
     "kensaku": "kensaku-v1.0.17",
@@ -15,7 +15,7 @@
     "notecraft": "notecraft-v0.0.8",
     "paintcraft": "paintcraft-v0.2.0",
     "paintrs": "paintrs-v0.7.3",
-    "picasso-suite": "picasso-suite-v0.6.4",
+    "picasso-suite": "picasso-suite-v0.7.0",
     "plancraft": "plancraft-v0.8.0",
     "procraft": "procraft-v0.0.5-beta",
     "prowave": "prowave-v0.2.2",
