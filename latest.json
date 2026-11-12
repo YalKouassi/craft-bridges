@@ -7,7 +7,7 @@
     "chromaforge": "chromaforge-v26.46.1",
     "crabcraft": "crabcraft-v0.5.0",
     "datacraft": "datacraft-v0.15.0",
-    "dotcraft": "dotcraft-v0.5.0",
+    "dotcraft": "dotcraft-v0.6.0",
     "earthcraft": "earthcraft-v0.2.0",
     "kensaku": "kensaku-v1.0.17",
     "mailcraft": "mailcraft-v0.12.0",
@@ -21,7 +21,7 @@
     "prowave": "prowave-v0.2.2",
     "rustgis": "rustgis-v0.6.0",
     "statcraft": "statcraft-v0.3.0",
-    "subcraft": "subcraft-v0.3.5",
+    "subcraft": "subcraft-v0.3.6",
     "tracedraw": "tracedraw-v0.44.1",
     "transit": "transit-v0.6.2"
   }
