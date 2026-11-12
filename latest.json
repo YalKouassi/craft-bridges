@@ -21,8 +21,8 @@
     "prowave": "prowave-v0.2.2",
     "rustgis": "rustgis-v0.6.0",
     "statcraft": "statcraft-v0.3.0",
-    "subcraft": "subcraft-v0.3.4",
-    "tracedraw": "tracedraw-v0.44.0",
+    "subcraft": "subcraft-v0.3.5",
+    "tracedraw": "tracedraw-v0.44.1",
     "transit": "transit-v0.6.2"
   }
 }
