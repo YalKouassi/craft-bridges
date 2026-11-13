@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "apps": {
-    "altered-audio-editor": "altered-audio-editor-v0.24.0",
+    "altered-audio-editor": "altered-audio-editor-v0.25.0",
     "bimcraft": "bimcraft-v0.11.0",
     "capsulecraft": "capsulecraft-v2.8.0",
     "chromaforge": "chromaforge-v26.46.2",
@@ -23,6 +23,6 @@
     "statcraft": "statcraft-v0.3.0",
     "subcraft": "subcraft-v0.3.6",
     "tracedraw": "tracedraw-v0.45.1",
-    "transit": "transit-v0.7.0"
+    "transit": "transit-v0.7.1"
   }
 }
