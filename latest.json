@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "apps": {
-    "altered-audio-editor": "altered-audio-editor-v0.60.0",
+    "altered-audio-editor": "altered-audio-editor-v0.61.0",
     "bimcraft": "bimcraft-v0.12.0",
     "capsulecraft": "capsulecraft-v2.8.0",
     "chromaforge": "chromaforge-v26.47.3",
@@ -12,7 +12,7 @@
     "kensaku": "kensaku-v1.0.18",
     "mailcraft": "mailcraft-v0.14.0",
     "mapcraft": "mapcraft-v0.6.5",
-    "notecraft": "notecraft-v0.0.17",
+    "notecraft": "notecraft-v0.0.18",
     "paintcraft": "paintcraft-v0.2.0",
     "paintrs": "paintrs-v0.8.0",
     "picasso-suite": "picasso-suite-v0.8.0",
