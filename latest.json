@@ -19,9 +19,9 @@
     "plancraft": "plancraft-v0.8.0",
     "procraft": "procraft-v0.0.7-beta",
     "prowave": "prowave-v0.2.2",
-    "rustgis": "rustgis-v0.7.0",
+    "rustgis": "rustgis-v0.8.0",
     "statcraft": "statcraft-v0.4.4",
-    "subcraft": "subcraft-v0.4.6",
+    "subcraft": "subcraft-v0.5.0",
     "tracedraw": "tracedraw-v0.50.3",
     "transit": "transit-v0.7.4"
   }
